@@ -1,5 +1,7 @@
 import re
 
+from backend.app.data.skills import SKILLS
+
 
 def extract_email(text):
     """
@@ -36,27 +38,11 @@ def extract_skills(text):
     Extract technical skills from resume text.
     """
 
-    skills_database = [
-        "Python",
-        "Java",
-        "JavaScript",
-        "FastAPI",
-        "React",
-        "Node.js",
-        "MongoDB",
-        "SQL",
-        "Machine Learning",
-        "TensorFlow",
-        "PyTorch",
-        "AWS",
-        "Google Cloud"
-    ]
-
     found_skills = []
 
     text_lower = text.lower()
 
-    for skill in skills_database:
+    for skill in SKILLS:
         if skill.lower() in text_lower:
             found_skills.append(skill)
 

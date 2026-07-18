@@ -1,36 +1,19 @@
+from backend.app.data.skills import SKILLS
+import re
+
 def extract_jd_skills(job_description):
     """
     Extract required skills from a job description.
     """
 
-    skills_database = [
-        "Python",
-        "Java",
-        "JavaScript",
-        "FastAPI",
-        "React",
-        "Node.js",
-        "MongoDB",
-        "SQL",
-        "Machine Learning",
-        "Deep Learning",
-        "TensorFlow",
-        "PyTorch",
-        "AWS",
-        "Google Cloud",
-        "Docker",
-        "Kubernetes",
-        "Git",
-        "REST API",
-        "Agile"
-    ]
-
     found_skills = []
 
     jd_text = job_description.lower()
 
-    for skill in skills_database:
-        if skill.lower() in jd_text:
+    for skill in SKILLS:
+        pattern = r"\b" + re.escape(skill.lower()) + r"\b"
+
+        if re.search(pattern, jd_text):
             found_skills.append(skill)
 
     return found_skills

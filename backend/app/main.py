@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form
-
+from backend.app.services.semantic_matcher import calculate_semantic_similarity
 from backend.app.utils.pdf_reader import extract_text_from_pdf
 
 from backend.app.services.resume_analyzer import analyze_resume
@@ -59,14 +59,20 @@ async def analyze_resume_with_jd(
         resume_skills,
         jd_skills
     )
+    # Calculate semantic similarity
+    semantic_similarity = calculate_semantic_similarity(
+    resume_text,
+    job_description
+)
+    
     suggestions = generate_suggestions(
     comparison["missing_skills"],
     ats_score
 )
-
     return {
     "filename": file.filename,
     "ats_score": ats_score,
+    "semantic_similarity": semantic_similarity,
     "resume_skills": resume_skills,
     "job_description_skills": jd_skills,
     "comparison": comparison,
