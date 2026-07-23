@@ -146,31 +146,11 @@ const improveResume = async () => {
       marginTop: "30px",
     }}
   >
-    {improvedResume && (
-  <div
-    style={{
-      marginTop: "30px",
-      padding: "20px",
-      background: "#fff",
-      borderRadius: "10px",
-      boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-    }}
-  >
-    <h2>✨ AI Improved Resume</h2>
-
-    <pre
-      style={{
-        whiteSpace: "pre-wrap",
-        fontFamily: "inherit",
-      }}
-    >
-      {improvedResume}
-    </pre>
-  </div>
-)}
+    
     <AnalysisResults
   result={result}
   onImprove={improveResume}
+  improvedResume={improvedResume}
 />
     <QualityFeedback feedback={result.quality_feedback} />
 
