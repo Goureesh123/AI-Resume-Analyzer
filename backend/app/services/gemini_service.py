@@ -39,3 +39,36 @@ Job Description:
     )
 
     return response.text
+
+
+def generate_interview_questions(resume_text, job_description):
+    prompt = f"""
+You are an expert technical interviewer.
+
+Generate interview questions based only on the candidate's resume
+and the provided job description.
+
+Rules:
+- Do not invent skills or experience.
+- Generate exactly 10 questions.
+- Include:
+  - 5 technical questions
+  - 3 project-based questions
+  - 2 behavioral questions
+- Keep questions relevant to the role.
+- Return the questions in a numbered list.
+- Use clear section headings.
+
+Resume:
+{resume_text}
+
+Job Description:
+{job_description}
+"""
+
+    response = client.models.generate_content(
+        model="gemini-3.6-flash",
+        contents=prompt,
+    )
+
+    return response.text

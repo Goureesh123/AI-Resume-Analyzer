@@ -9,23 +9,41 @@ function AnalysisResults({
   result,
   onImprove,
   improvedResume = "",
+  onGenerateInterview,
+  interviewQuestions = "",
 }) {
-  const [copied, setCopied] = useState(false);
+  const [copiedResume, setCopiedResume] = useState(false);
+  const [copiedQuestions, setCopiedQuestions] = useState(false);
 
   const copyResume = async () => {
     if (!improvedResume) return;
 
     try {
       await navigator.clipboard.writeText(improvedResume);
-
-      setCopied(true);
+      setCopiedResume(true);
 
       setTimeout(() => {
-        setCopied(false);
+        setCopiedResume(false);
       }, 2000);
     } catch (error) {
       console.error("Copy failed:", error);
       alert("Unable to copy the improved resume.");
+    }
+  };
+
+  const copyQuestions = async () => {
+    if (!interviewQuestions) return;
+
+    try {
+      await navigator.clipboard.writeText(interviewQuestions);
+      setCopiedQuestions(true);
+
+      setTimeout(() => {
+        setCopiedQuestions(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Copy failed:", error);
+      alert("Unable to copy the interview questions.");
     }
   };
 
@@ -104,23 +122,6 @@ function AnalysisResults({
     addPageIfNeeded(20);
 
     pdf.setFontSize(14);
-    pdf.text("Quality Feedback", 20, y);
-    y += 8;
-
-    pdf.setFontSize(11);
-
-    result.quality_feedback?.forEach((feedback) => {
-      const lines = pdf.splitTextToSize(`- ${feedback}`, 170);
-
-      addPageIfNeeded(lines.length * 6 + 5);
-
-      pdf.text(lines, 20, y);
-      y += lines.length * 6 + 4;
-    });
-
-    addPageIfNeeded(20);
-
-    pdf.setFontSize(14);
     pdf.text("Suggestions", 20, y);
     y += 8;
 
@@ -139,7 +140,6 @@ function AnalysisResults({
       addPageIfNeeded(30);
 
       y += 8;
-
       pdf.setFontSize(14);
       pdf.text("AI Improved Resume", 20, y);
       y += 10;
@@ -153,7 +153,28 @@ function AnalysisResults({
 
       improvedLines.forEach((line) => {
         addPageIfNeeded(7);
+        pdf.text(line, 20, y);
+        y += 5;
+      });
+    }
 
+    if (interviewQuestions) {
+      addPageIfNeeded(30);
+
+      y += 8;
+      pdf.setFontSize(14);
+      pdf.text("AI Interview Questions", 20, y);
+      y += 10;
+
+      pdf.setFontSize(10);
+
+      const questionLines = pdf.splitTextToSize(
+        interviewQuestions,
+        170
+      );
+
+      questionLines.forEach((line) => {
+        addPageIfNeeded(7);
         pdf.text(line, 20, y);
         y += 5;
       });
@@ -202,22 +223,62 @@ function AnalysisResults({
         color="error"
       />
 
-      <button
-        type="button"
-        onClick={onImprove}
+      <div
         style={{
+          display: "flex",
+          gap: "12px",
+          flexWrap: "wrap",
           marginTop: "30px",
-          padding: "12px 20px",
-          borderRadius: "8px",
-          background: "#4f46e5",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "16px",
         }}
       >
-        ✨ Improve My Resume with AI
-      </button>
+        <button
+          type="button"
+          onClick={onImprove}
+          style={{
+            padding: "12px 20px",
+            borderRadius: "8px",
+            background: "#4f46e5",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
+          ✨ Improve My Resume with AI
+        </button>
+
+        <button
+          type="button"
+          onClick={onGenerateInterview}
+          style={{
+            padding: "12px 20px",
+            borderRadius: "8px",
+            background: "#7c3aed",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
+          🎤 Generate Interview Questions
+        </button>
+
+        <button
+          type="button"
+          onClick={downloadPdfReport}
+          style={{
+            padding: "12px 20px",
+            borderRadius: "8px",
+            background: "#0f766e",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
+          📄 Download PDF Report
+        </button>
+      </div>
 
       {improvedResume && (
         <div className="section-card" style={{ marginTop: "30px" }}>
@@ -231,49 +292,23 @@ function AnalysisResults({
               flexWrap: "wrap",
             }}
           >
-            <h2 style={{ margin: 0 }}>
-              ✨ AI Improved Resume
-            </h2>
+            <h2 style={{ margin: 0 }}>✨ AI Improved Resume</h2>
 
-            <div
+            <button
+              type="button"
+              onClick={copyResume}
               style={{
-                display: "flex",
-                gap: "10px",
-                flexWrap: "wrap",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                background: "#4f46e5",
+                color: "white",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "600",
               }}
             >
-              <button
-                type="button"
-                onClick={copyResume}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  background: "#4f46e5",
-                  color: "white",
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                }}
-              >
-                {copied ? "✅ Copied!" : "📋 Copy"}
-              </button>
-
-              <button
-                type="button"
-                onClick={downloadPdfReport}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  background: "#0f766e",
-                  color: "white",
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                }}
-              >
-                📄 Download PDF
-              </button>
-            </div>
+              {copiedResume ? "✅ Copied!" : "📋 Copy Resume"}
+            </button>
           </div>
 
           <pre
@@ -286,6 +321,51 @@ function AnalysisResults({
             }}
           >
             {improvedResume}
+          </pre>
+        </div>
+      )}
+
+      {interviewQuestions && (
+        <div className="section-card" style={{ marginTop: "30px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "15px",
+              marginBottom: "20px",
+              flexWrap: "wrap",
+            }}
+          >
+            <h2 style={{ margin: 0 }}>🎤 AI Interview Questions</h2>
+
+            <button
+              type="button"
+              onClick={copyQuestions}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                background: "#7c3aed",
+                color: "white",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "600",
+              }}
+            >
+              {copiedQuestions ? "✅ Copied!" : "📋 Copy Questions"}
+            </button>
+          </div>
+
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              fontFamily: "inherit",
+              lineHeight: "1.7",
+              margin: 0,
+            }}
+          >
+            {interviewQuestions}
           </pre>
         </div>
       )}

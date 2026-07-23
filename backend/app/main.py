@@ -7,7 +7,10 @@ from backend.app.services.semantic_matcher import (
 from backend.app.utils.pdf_reader import extract_text_from_pdf
 from backend.app.services.quality_analyzer import analyze_resume_quality
 from backend.app.services.resume_analyzer import analyze_resume
-from backend.app.services.gemini_service import improve_resume
+from backend.app.services.gemini_service import (
+    improve_resume,
+    generate_interview_questions,
+)
 from backend.app.services.jd_analyzer import (
     extract_jd_skills,
     compare_skills,
@@ -91,6 +94,46 @@ async def improve_resume_endpoint(
             detail=f"Failed to improve resume: {str(error)}",
         )
 
+@app.post("/generate-interview-questions")
+async def generate_interview_questions_endpoint(
+    file: UploadFile = File(...),
+    job_description: str = Form(...),
+):
+    try:
+        resume_text = extract_text_from_pdf(file.file)
+
+        if not resume_text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from the uploaded PDF.",
+            )
+
+        questions = generate_interview_questions(
+            resume_text,
+            job_description,
+        )
+
+        if not questions:
+            raise HTTPException(
+                status_code=500,
+                detail="Gemini returned an empty response.",
+            )
+
+        return {
+            "filename": file.filename,
+            "interview_questions": questions,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        print("Interview question generation error:", repr(error))
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate interview questions: {str(error)}",
+        )
 
 @app.post("/analyze-resume")
 async def analyze_resume_with_jd(

@@ -1,62 +1,42 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Upload, FileText, Sparkles } from "lucide-react";
+
 import LoadingScreen from "../components/LoadingScreen";
 import AnalysisResults from "../components/AnalysisResults";
 import QualityFeedback from "../components/QualityFeedback";
 import Suggestions from "../components/Suggestions";
 
 import "../App.css";
+
 function Home() {
   const [file, setFile] = useState(null);
   const [jobDescription, setJobDescription] = useState("");
-  const [improvedResume, setImprovedResume] = useState("");
   const [result, setResult] = useState(null);
+  const [improvedResume, setImprovedResume] = useState("");
+  const [interviewQuestions, setInterviewQuestions] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+
   useEffect(() => {
-  if (!loading) return;
+    if (!loading) return;
 
-  let step = 0;
+    let step = 0;
 
-  const interval = setInterval(() => {
-    step++;
+    const interval = setInterval(() => {
+      step += 1;
+      setLoadingStep(step);
 
-    setLoadingStep(step);
-
-    if (step >= 5) {
-      clearInterval(interval);
-    }
-  }, 500);
-
-  return () => clearInterval(interval);
-}, [loading]);
-const improveResume = async () => {
-  const formData = new FormData();
-
-  formData.append("file", file);
-  formData.append("job_description", jobDescription);
-
-  try {
-    const response = await axios.post(
-      "http://127.0.0.1:8000/improve-resume",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      if (step >= 5) {
+        clearInterval(interval);
       }
-    );
+    }, 500);
 
-    setImprovedResume(response.data.improved_resume);
+    return () => clearInterval(interval);
+  }, [loading]);
 
-  } catch (error) {
-    console.error(error);
-    alert("Failed to improve resume.");
-  }
-};  
   const analyzeResume = async () => {
-    if (!file || !jobDescription) {
+    if (!file || !jobDescription.trim()) {
       alert("Please upload a resume and enter a job description.");
       return;
     }
@@ -68,6 +48,9 @@ const improveResume = async () => {
     try {
       setLoading(true);
       setLoadingStep(0);
+      setResult(null);
+      setImprovedResume("");
+      setInterviewQuestions("");
 
       const response = await axios.post(
         "http://127.0.0.1:8000/analyze-resume",
@@ -80,14 +63,13 @@ const improveResume = async () => {
       );
 
       console.log("API Response:", response.data);
-
       setResult(response.data);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error analyzing resume:", error);
 
       if (error.response) {
-        console.log("Status:", error.response.status);
-        console.log("Response:", error.response.data);
+        console.error("Status:", error.response.status);
+        console.error("Response:", error.response.data);
       }
 
       alert("Error analyzing resume.");
@@ -95,10 +77,71 @@ const improveResume = async () => {
       setLoading(false);
     }
   };
-  if (loading) {
-  return <LoadingScreen loadingStep={loadingStep} />;
-}
 
+  const improveResume = async () => {
+    if (!file || !jobDescription.trim()) {
+      alert("Please upload a resume and enter a job description.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("job_description", jobDescription);
+
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:8000/improve-resume",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setImprovedResume(response.data.improved_resume || "");
+    } catch (error) {
+      console.error("Failed to improve resume:", error);
+      alert("Failed to improve resume.");
+    }
+  };
+
+  const generateInterviewQuestions = async () => {
+    if (!file || !jobDescription.trim()) {
+      alert("Please upload a resume and enter a job description.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("job_description", jobDescription);
+
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:8000/generate-interview-questions",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setInterviewQuestions(
+        response.data.interview_questions || ""
+      );
+    } catch (error) {
+      console.error(
+        "Failed to generate interview questions:",
+        error
+      );
+      alert("Failed to generate interview questions.");
+    }
+  };
+
+  if (loading) {
+    return <LoadingScreen loadingStep={loadingStep} />;
+  }
 
   return (
     <div className="container">
@@ -119,12 +162,21 @@ const improveResume = async () => {
         <label className="upload-box">
           <Upload size={35} />
 
-          <span>{file ? file.name : "Choose PDF Resume"}</span>
+          <span>
+            {file ? file.name : "Choose PDF Resume"}
+          </span>
 
           <input
             type="file"
             accept=".pdf"
-            onChange={(e) => setFile(e.target.files[0])}
+            onChange={(event) => {
+              const selectedFile = event.target.files?.[0] || null;
+
+              setFile(selectedFile);
+              setResult(null);
+              setImprovedResume("");
+              setInterviewQuestions("");
+            }}
           />
         </label>
 
@@ -133,50 +185,61 @@ const improveResume = async () => {
         <textarea
           placeholder="Paste job description here..."
           value={jobDescription}
-          onChange={(e) => setJobDescription(e.target.value)}
+          onChange={(event) => {
+            setJobDescription(event.target.value);
+            setResult(null);
+            setImprovedResume("");
+            setInterviewQuestions("");
+          }}
         />
 
-        <button onClick={analyzeResume}>
-  Analyze Resume
-</button>
+        <button
+          type="button"
+          onClick={analyzeResume}
+          disabled={loading}
+        >
+          Analyze Resume
+        </button>
 
-       {result && (
-  <div
-    style={{
-      marginTop: "30px",
-    }}
-  >
-    
-    <AnalysisResults
-  result={result}
-  onImprove={improveResume}
-  improvedResume={improvedResume}
-/>
-    <QualityFeedback feedback={result.quality_feedback} />
+        {result && (
+          <div style={{ marginTop: "30px" }}>
+            <AnalysisResults
+              result={result}
+              onImprove={improveResume}
+              improvedResume={improvedResume}
+              onGenerateInterview={generateInterviewQuestions}
+              interviewQuestions={interviewQuestions}
+            />
 
-    <Suggestions suggestions={result.suggestions} />
+            <QualityFeedback
+              feedback={result.quality_feedback || []}
+            />
 
-    <details style={{ marginTop: "20px" }}>
-      <summary>
-        <strong>View Raw JSON</strong>
-      </summary>
+            <Suggestions
+              suggestions={result.suggestions || []}
+            />
 
-      <pre
-        style={{
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          fontSize: "12px",
-          marginTop: "10px",
-        }}
-      >
-        {JSON.stringify(result, null, 2)}
-      </pre>
-    </details>
-  </div>
-)}
-</div>   
-</div>
-);
-}   
+            <details style={{ marginTop: "20px" }}>
+              <summary>
+                <strong>View Raw JSON</strong>
+              </summary>
+
+              <pre
+                style={{
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  fontSize: "12px",
+                  marginTop: "10px",
+                }}
+              >
+                {JSON.stringify(result, null, 2)}
+              </pre>
+            </details>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default Home;
