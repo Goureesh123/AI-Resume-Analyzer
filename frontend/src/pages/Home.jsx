@@ -8,6 +8,9 @@ import QualityFeedback from "../components/QualityFeedback";
 import Suggestions from "../components/Suggestions";
 
 import "../App.css";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://ai-resume-analyzer-api-09d2.onrender.com";
 
 function Home() {
   const [file, setFile] = useState(null);
@@ -53,7 +56,7 @@ function Home() {
       setInterviewQuestions("");
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/analyze-resume",
+        `${API_URL}/analyze-resume`,
         formData,
         {
           headers: {
@@ -90,7 +93,7 @@ function Home() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/improve-resume",
+        `${API_URL}/improve-resume`,
         formData,
         {
           headers: {
@@ -118,7 +121,7 @@ function Home() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/generate-interview-questions",
+        `${API_URL}/generate-interview-questions`,
         formData,
         {
           headers: {
