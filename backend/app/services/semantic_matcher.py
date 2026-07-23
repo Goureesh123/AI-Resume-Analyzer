@@ -1,21 +1,31 @@
-from sentence_transformers import SentenceTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load the model only once when the application starts
-model = SentenceTransformer("all-MiniLM-L6-v2")
 
-
-def calculate_semantic_similarity(resume_text, job_description):
+def calculate_semantic_similarity(
+    resume_text: str,
+    job_description: str,
+) -> float:
     """
-    Calculate semantic similarity between resume and job description.
-    Returns a similarity percentage between 0 and 100.
+    Calculate text similarity using TF-IDF and cosine similarity.
+    Returns a percentage from 0 to 100.
     """
 
-    embeddings = model.encode([resume_text, job_description])
+    if not resume_text.strip() or not job_description.strip():
+        return 0.0
+
+    vectorizer = TfidfVectorizer(
+        stop_words="english",
+        ngram_range=(1, 2),
+    )
+
+    vectors = vectorizer.fit_transform(
+        [resume_text, job_description]
+    )
 
     similarity = cosine_similarity(
-        [embeddings[0]],
-        [embeddings[1]]
+        vectors[0:1],
+        vectors[1:2],
     )[0][0]
 
     return round(float(similarity) * 100, 2)
