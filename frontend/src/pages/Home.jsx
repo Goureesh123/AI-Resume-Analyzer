@@ -1,0 +1,202 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Upload, FileText, Sparkles } from "lucide-react";
+import LoadingScreen from "../components/LoadingScreen";
+import AnalysisResults from "../components/AnalysisResults";
+import QualityFeedback from "../components/QualityFeedback";
+import Suggestions from "../components/Suggestions";
+
+import "../App.css";
+function Home() {
+  const [file, setFile] = useState(null);
+  const [jobDescription, setJobDescription] = useState("");
+  const [improvedResume, setImprovedResume] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  useEffect(() => {
+  if (!loading) return;
+
+  let step = 0;
+
+  const interval = setInterval(() => {
+    step++;
+
+    setLoadingStep(step);
+
+    if (step >= 5) {
+      clearInterval(interval);
+    }
+  }, 500);
+
+  return () => clearInterval(interval);
+}, [loading]);
+const improveResume = async () => {
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("job_description", jobDescription);
+
+  try {
+    const response = await axios.post(
+      "http://127.0.0.1:8000/improve-resume",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    setImprovedResume(response.data.improved_resume);
+
+  } catch (error) {
+    console.error(error);
+    alert("Failed to improve resume.");
+  }
+};  
+  const analyzeResume = async () => {
+    if (!file || !jobDescription) {
+      alert("Please upload a resume and enter a job description.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("job_description", jobDescription);
+
+    try {
+      setLoading(true);
+      setLoadingStep(0);
+
+      const response = await axios.post(
+        "http://127.0.0.1:8000/analyze-resume",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+
+      setResult(response.data);
+    } catch (error) {
+      console.error("Error:", error);
+
+      if (error.response) {
+        console.log("Status:", error.response.status);
+        console.log("Response:", error.response.data);
+      }
+
+      alert("Error analyzing resume.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  if (loading) {
+  return <LoadingScreen loadingStep={loadingStep} />;
+}
+
+
+  return (
+    <div className="container">
+      <h1>
+        AI Resume Analyzer <Sparkles size={30} />
+      </h1>
+
+      <p className="subtitle">
+        Analyze your resume against any job description using AI
+      </p>
+
+      <div className="card">
+        <h2>
+          <FileText size={22} />
+          Upload Resume
+        </h2>
+
+        <label className="upload-box">
+          <Upload size={35} />
+
+          <span>{file ? file.name : "Choose PDF Resume"}</span>
+
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={(e) => setFile(e.target.files[0])}
+          />
+        </label>
+
+        <h2>Job Description</h2>
+
+        <textarea
+          placeholder="Paste job description here..."
+          value={jobDescription}
+          onChange={(e) => setJobDescription(e.target.value)}
+        />
+
+        <button onClick={analyzeResume}>
+  Analyze Resume
+</button>
+
+       {result && (
+  <div
+    style={{
+      marginTop: "30px",
+    }}
+  >
+    {improvedResume && (
+  <div
+    style={{
+      marginTop: "30px",
+      padding: "20px",
+      background: "#fff",
+      borderRadius: "10px",
+      boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+    }}
+  >
+    <h2>✨ AI Improved Resume</h2>
+
+    <pre
+      style={{
+        whiteSpace: "pre-wrap",
+        fontFamily: "inherit",
+      }}
+    >
+      {improvedResume}
+    </pre>
+  </div>
+)}
+    <AnalysisResults
+  result={result}
+  onImprove={improveResume}
+/>
+    <QualityFeedback feedback={result.quality_feedback} />
+
+    <Suggestions suggestions={result.suggestions} />
+
+    <details style={{ marginTop: "20px" }}>
+      <summary>
+        <strong>View Raw JSON</strong>
+      </summary>
+
+      <pre
+        style={{
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          fontSize: "12px",
+          marginTop: "10px",
+        }}
+      >
+        {JSON.stringify(result, null, 2)}
+      </pre>
+    </details>
+  </div>
+)}
+</div>   
+</div>
+);
+}   
+
+export default Home;
